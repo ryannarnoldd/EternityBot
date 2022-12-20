@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import random
+
 load_dotenv()
 
 greetings = ['hello', 'hi', 'hey', 'yo', 'sup', 'wassup']
@@ -37,6 +38,26 @@ async def roll(ctx, max = '6'):
         description = result, 
         color = discord.Color.blue()
     ))
+
+
+@bot.command(name='roulette', brief="Here's your chance if you ever wanted to die!", pass_context=True, aliases=['rr', 'russian'])
+async def russianroulette(ctx, chance = '6'):
+    if chance.isdigit() and int(chance) > 1:
+        chance = random.randint(1, int(chance))
+        result = "has **lived**!" if chance != 1 else "has **died**!"
+        reaction = '😇' if chance != 1 else '💀'
+        result = f'**{chance}** bullets\n{ctx.author.mention} {result}'
+    else:
+        result = f'Sorry, I don\'t think **{chance}** bullets is fair for both you and I...'
+        reaction = '🧐'
+
+    msg = await ctx.send(embed = discord.Embed(
+                title = 'Russian Roulette',
+                description = result,
+                color = discord.Colour.blue()
+            ))
+    
+    await msg.add_reaction(reaction)
 
 
 
