@@ -13,6 +13,11 @@ greetings = ['hello', 'hi', 'hey', 'yo', 'sup', 'wassup']
 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
+# Load all cogs in the cogs folder.
+for filename in os.listdir('./cogs'):
+	if filename.endswith('.py'):
+		bot.load_extension(f'cogs.{filename[:-3]}')
+
 # On ready event.
 @bot.event
 async def on_ready():
