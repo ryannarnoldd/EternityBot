@@ -4,6 +4,9 @@ import os
 from dotenv import load_dotenv
 import random
 
+# Search Hybrid Commands for more information on how to use this.
+
+
 load_dotenv()
 
 greetings = ['hello', 'hi', 'hey', 'yo', 'sup', 'wassup']
