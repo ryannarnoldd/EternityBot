@@ -2,25 +2,31 @@
     "users": {
         "391346510215905281": {
             "current": [
-                "oeowfekeo",
-                "qqqqqq",
                 "hi",
-                "hi",
-                "no more sleep",
-                "sleep more",
-                "i want to go to  a bible study",
                 "I am always tired too",
-                "I am always hungry",
+                "i want to go to  a bible study",
+                "sleep more",
+                "oeowfekeo",
                 "My job interview",
                 "Mother may have cancer",
-                "My dog died"
+                "My dog died",
+                "hi"
             ],
             "answered": [
+                "no more sleep",
+                "I am always hungry",
+                "qqqqqq",
+                "i want to go to  a bible study",
+                "sleep more",
                 "I feel lonely",
                 "Finals",
                 "Back pain went away",
                 "I am asking tomorrow for raise"
             ]
+        },
+        "333397910043623435": {
+            "current": [],
+            "answered": []
         }
     }
 }
