@@ -21,6 +21,8 @@ async def on_ready():
 async def on_message(message):
     if message.author == bot.user: return
 
+    print(f'{message.author.mention}')
+
     # If the message contains any of the greetings, reply with a greeting!
     if any(greet in message.content.lower().strip() for greet in greetings):
         await message.reply('Hello!')
@@ -32,6 +34,7 @@ async def on_message(message):
 async def load_cogs():
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
+            print(f'Loading {filename[:-3]}...')
             await bot.load_extension(f'cogs.{filename[:-3]}')
 
 async def main():
