@@ -7,8 +7,15 @@ from discord import Embed
 global PRAYERS_FILE
 PRAYERS_FILEPATH = 'data/prayers.json'
 
+help_guide = {
+    'List <mention>': 'List all prayer requests of you, or someone else!',
+    'Add <prayer>': 'Add a prayer request to your list',
+    'Answer <index>': 'Mark a prayer request as answered (Praise God!)',
+    'Help': 'Show this help guide'
+}
+
 def embed(title, description, color=discord.Colour.blue()):
-    return discord.Embed(title=title, description=description, color=color)
+    return Embed(title=title, description=description, color=color)
 
 class Faith(commands.Cog):
 
@@ -33,13 +40,13 @@ class Faith(commands.Cog):
         return Embed(title=title, description=description, color=color)
 
     async def answer_prayer(self, author, index):
-        current_prayers = self.prayers["users"][str(author.id)]["current"]
         if str(author.id) in self.prayers["users"]:
+            current_prayers = self.prayers["users"][str(author.id)]["current"]
             if index-1 <= len(current_prayers):
                 prayer = current_prayers[index-1]
                 current_prayers.pop(index - 1)
                 self.prayers["users"][str(author.id)]["answered"].insert(0, prayer)
-        await self.save_prayers()
+        return await self.save_prayers()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -87,8 +94,12 @@ class Faith(commands.Cog):
                     msg = await self.bot.wait_for("message", check=None)
                     await self.answer_prayer(ctx.author, int(msg.content))
 
-            case _:
-                await ctx.send('Please enter a valid command!')
+            case 'help' | _:
+                print('yuh')
+                help_text = '\n'.join([f'`{cmd}` - {desc}' for cmd, desc in help_guide.items()])
+                print(help_text)
+                await ctx.message.reply(embed = embed('Prayer Help', help_text))
+                
         
 
 
