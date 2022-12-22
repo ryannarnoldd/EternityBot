@@ -19,7 +19,8 @@ async def on_ready():
 # On message event.
 @bot.event
 async def on_message(message):
-    if message.author == bot.user: return
+    if message.author == bot.user:
+        return
 
     print(f'{message.author.mention}')
 
