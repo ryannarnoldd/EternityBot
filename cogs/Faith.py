@@ -6,6 +6,9 @@ import asyncio
 global PRAYERS_FILE
 PRAYERS_FILEPATH = 'data/prayers.json'
 
+def embed(title, description, color=discord.Colour.blue()):
+    return discord.Embed(title=title, description=description, color=color)
+
 class Faith(commands.Cog):
 
     def __init__(self, bot):
@@ -29,7 +32,7 @@ class Faith(commands.Cog):
             }
 
         self.prayers["users"][str(author.id)]["current"].insert(0, prayer)
-        await self.save_prayers()
+        return await self.save_prayers()
 
     async def answer_prayer(self, author, index):
         current_prayers = self.prayers["users"][str(author.id)]["current"]
@@ -45,35 +48,40 @@ class Faith(commands.Cog):
 		
 
 
-    @commands.command(name='pray', brief="Here's your chance if you ever wanted to die!")
+    @commands.command(name='pray', brief="Here's your chance if you ever wanted to die!", aliases=['prayer', 'p'])
     # Have the cmd be the command and the message be the message, or the rest of the string.
     async def pray(self, ctx, cmd='', *, message=''):
         
         match cmd:
             case 'list':
-                if message.startswith('<@') and message.endswith('>'):
-                    id = message[2:-1]
-                    user_list = self.prayers["users"][str(id)]['current']
-                    if user_list:
-                        await ctx.send(f'Prayers for {message}:\n{user_list}')
-                    else:
-                        await ctx.send(f'{message} has no prayers!')
+                id = message[2:-1] if message in self.prayers["users"] else ctx.author.id
+                name = self.bot.get_user(int(id)).name
+                prayers = self.prayers["users"][str(id)]['current']
+
+                if prayers:
+                    prayer_list = '\n'.join([f'**{i+1}**.  {prayer}' for i, prayer in enumerate(prayers)])            
                 else:
-                    author_list = self.prayers["users"][str(ctx.author.id)]['current']
-                    if author_list:
-                        await ctx.send(f'Your prayers:\n{author_list}')
-                    else:
-                        await ctx.send('You have no prayers!')
+                    prayer_list = 'No prayers'
+
+                await ctx.send(embed = embed(f'Prayers for {name}', prayer_list))
 
 
             case 'add':
                 if message != '':
                     await self.add_prayer(ctx.author, message)
-                    await ctx.message.reply(f'Prayer added: {message}')
+                    await ctx.send(embed = embed('Prayer added!', f'**{message}**'))
                 else:
-                    await ctx.send('Please enter a prayer!')
+                    await ctx.send(embed = embed('Please enter a prayer to be added!'))
                     msg = await self.bot.wait_for("message", check=None)
                     await self.add_prayer(ctx.author, msg.content)
+
+                m = message if message != '' else msg.content
+
+                # print(m)
+                
+                await ctx.send(embed = embed('Prayer added!', f'**{m}**'))
+
+                
 
             case 'answer':
                 if message.isdigit() and int(message) <= len(self.prayers["users"][str(ctx.author.id)]["current"]):
