@@ -41,6 +41,15 @@ class Faith(commands.Cog):
                 self.prayers["users"][str(author.id)]["answered"].insert(0, prayer)
         await self.save_prayers()
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        if str(member.id) not in self.prayers["users"]:
+            self.prayers["users"][str(member.id)] = {
+                "current": [],
+                "answered": []
+            }
+            await self.save_prayers()
+
 
     @commands.command(name='pray', brief="Here's your chance if you ever wanted to die!", aliases=['prayer', 'p'])
     # Have the cmd be the command and the message be the message, or the rest of the string.
