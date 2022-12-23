@@ -22,8 +22,6 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    print(f'{message.author.mention}')
-
     # If the message contains any of the greetings, reply with a greeting!
     if any(greet in message.content.lower().strip() for greet in greetings):
         await message.reply('Hello!')
