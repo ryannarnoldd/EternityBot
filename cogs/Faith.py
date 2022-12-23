@@ -16,7 +16,6 @@ help_guide = {
     'help': 'Show this help guide'
 }
 
-
 class Faith(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -31,40 +30,41 @@ class Faith(commands.Cog):
             await asyncio.sleep(0.05)
 
     async def add_prayer(self, author, prayer):
-        self.prayers["users"][str(author.id)]["current"].insert(0, {
+        self.prayers["users"][str(author.id)].insert(0, {
             "prayer": prayer,
             "time": datetime.now().strftime("%Y:%m:%d:%H:%M"),
             "answered": False
         })
 
-        # datetime.now().strftime("%Y:%m:%d:%H:%M")
-
-
         await self.save_prayers()
         return
+        
 
     def get_prayer_list(self, id):
         name = self.bot.get_user(int(id)).name
-        prayers = self.prayers["users"][str(id)]["current"]
-        prayer_list = '\n'.join([f'**{i+1}**.  {prayer}' for i, prayer in enumerate(prayers)]) if prayers else 'No prayer requests!'
+        prayers = self.prayers["users"][str(id)]
+        prayer_list = '\n'.join([f'**{index+1}**. {prayer["prayer"]} `{prayer["time"]}`' for index, prayer in enumerate(prayers)])
         return Embed(title=f'Prayer Requests for {name}', description=prayer_list, color=discord.Colour.blue())
 
+    def get_recent_prayers(self):
+        prayers = self.prayers["users"]
+        # Sort prayers by time object.
+        prayers = {user: sorted(prayers[user], key=lambda prayer: prayer["time"], reverse=True) for user in prayers}
+        # Get the first 5 prayers.
+        prayers = {user: prayers[user][:5] for user in prayers}
+        prayer_list = '\n'.join([f'**{self.bot.get_user(int(id)).name}**. {prayer["prayer"]} `{prayer["time"]}`' for id, prayer in prayers.items()])
+        return Embed(title=f'Recent Prayer Requests', description=prayer_list, color=discord.Colour.blue())
+
     async def answer_prayer(self, author, index):
-        if str(author.id) in self.prayers["users"]:
-            current_prayers = self.prayers["users"][str(author.id)]["current"]
-            if index <= len(current_prayers):
-                prayer = current_prayers[index-1]
-                current_prayers.pop(index - 1)
-                self.prayers["users"][str(author.id)]["answered"].insert(0, prayer)
+        prayers = self.prayers["users"][str(author.id)]
+        if 0 < index <= len(prayers):
+            prayers[index-1]["answered"] = True
         await self.save_prayers()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if str(member.id) not in self.prayers["users"]:
-            self.prayers["users"][str(member.id)] = {
-                "current": [],
-                "answered": []
-            }
+            self.prayers["users"][str(member.id)] = []
             await self.save_prayers()
 
 
@@ -75,8 +75,9 @@ class Faith(commands.Cog):
         match cmd:
 
             case 'list':
+                await ctx.send(f'Prayer request added! `{datetime.now().strftime("%Y:%m:%d:%H:%M")}`')
                 id = message[2:-1] if message in self.prayers["users"] else ctx.author.id
-                await ctx.message.reply(embed = self.get_prayer_list(id))
+                await ctx.message.reply(embed = self.get_recent_prayers())
 
             case 'add':
                 if message == '':
@@ -86,6 +87,7 @@ class Faith(commands.Cog):
                 else:
                     prayer = message
                     msg = ctx.message
+
 
                 await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
                 await self.add_prayer(ctx.author, prayer)
@@ -106,7 +108,6 @@ class Faith(commands.Cog):
                             msg = await self.bot.wait_for("message", check = lambda m: m.author == ctx.author and m.channel == ctx.channel)
 
                         message = msg.content
-                        print(message)
 
                     else:
                         msg = ctx.message
