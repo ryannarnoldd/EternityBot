@@ -65,24 +65,20 @@ class Faith(commands.Cog):
         prayer_list = ''
 
         for index, prayer in enumerate(user_prayers, start=1):
-            has_descr = '*****' if prayer["description"] != "" else ''
+            has_descr = '*' if prayer["description"] != "" else ''
             prayer_list += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
 
         if prayer_list == '': 'No prayers found!'
         return Embed(title=f'Prayer Requests for {name}', description=prayer_list, color=discord.Colour.blue())
 
     def get_recent_prayers(self, n=5):
-        print(self.prayers)
         prayers = [prayer for prayer in self.prayers if not prayer["answered"]]
-        # Get the n most recent prayers
         recent_prayers = prayers[:n] if len(prayers) > n else prayers
         prayer_list = ''
 
-        for index, prayer in enumerate(recent_prayers, start=1):
-            print(prayer)
-            has_descr = '*****' if prayer["description"] != "" else ''
-            prayer_list += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
-            print('Oof')
+        for index, prayer in enumerate(recent_prayers):
+            has_descr = '*' if prayer["description"] != "" else ''
+            prayer_list += f'**{index+1}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
             
         
         if prayer_list == '': 'No prayers found!'
