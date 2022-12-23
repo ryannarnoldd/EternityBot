@@ -5,9 +5,12 @@ import asyncio
 from discord import Embed
 # import datetime
 from datetime import datetime
+from operator import itemgetter
 
 global PRAYERS_FILE
 PRAYERS_FILEPATH = 'data/prayers.json'
+global DATE_FORMAT
+DATE_FORMAT = '%Y:%m:%d:%H:%M'
 
 help_guide = {
     'list <mention>': 'List all prayer requests of you, or someone else!',
@@ -16,12 +19,20 @@ help_guide = {
     'help': 'Show this help guide'
 }
 
+def time_str(self, date, format='%b. %d'):
+    date_object = datetime.strptime(date, DATE_FORMAT)
+    return date_object.strftime(format)	
+
 class Faith(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         with open(PRAYERS_FILEPATH, 'r') as prayers:
-            self.prayers = json.load(prayers)		
-            
+            self.prayers = json.load(prayers)
+
+    def time_str(self, date, format='%b.%d'):
+        date_object = datetime.strptime(date, DATE_FORMAT)
+        return date_object.strftime(format)	
+
     async def save_prayers(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
@@ -29,42 +40,59 @@ class Faith(commands.Cog):
                 prayers.write(json.dumps(self.prayers, indent=4))
             await asyncio.sleep(0.05)
 
-    async def add_prayer(self, author, prayer):
-        self.prayers["users"][str(author.id)].insert(0, {
+    async def add_prayer(self, author, prayer, description=""):
+        self.prayers.insert(0, {
+            "uid": str(author.id),
             "prayer": prayer,
-            "time": datetime.now().strftime("%Y:%m:%d:%H:%M"),
+            "description": description,
+            "time": datetime.now().strftime(DATE_FORMAT),
             "answered": False
         })
 
         await self.save_prayers()
         return
-        
-
-    def get_prayer_list(self, id):
-        name = self.bot.get_user(int(id)).name
-        prayers = self.prayers["users"][str(id)]
-        prayer_list = '\n'.join([f'**{index+1}**. {prayer["prayer"]} `{prayer["time"]}`' for index, prayer in enumerate(prayers)])
-        return Embed(title=f'Prayer Requests for {name}', description=prayer_list, color=discord.Colour.blue())
-
-    def get_recent_prayers(self):
-        prayers = self.prayers["users"]
-        # Sort prayers by time object.
-        prayers = {user: sorted(prayers[user], key=lambda prayer: prayer["time"], reverse=True) for user in prayers}
-        # Get the first 5 prayers.
-        prayers = {user: prayers[user][:5] for user in prayers}
-        prayer_list = '\n'.join([f'**{self.bot.get_user(int(id)).name}**. {prayer["prayer"]} `{prayer["time"]}`' for id, prayer in prayers.items()])
-        return Embed(title=f'Recent Prayer Requests', description=prayer_list, color=discord.Colour.blue())
 
     async def answer_prayer(self, author, index):
-        prayers = self.prayers["users"][str(author.id)]
+        prayers = self.prayers[str(author.id)]
         if 0 < index <= len(prayers):
             prayers[index-1]["answered"] = True
         await self.save_prayers()
 
+
+    def get_prayer_list(self, id):
+        name = self.bot.get_user(int(id)).name
+        user_prayers = [prayer for prayer in self.prayers if prayer["uid"] == str(id)]
+        prayer_list = ''
+
+        for index, prayer in enumerate(user_prayers, start=1):
+            has_descr = '*****' if prayer["description"] != "" else ''
+            prayer_list += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
+
+        if prayer_list == '': 'No prayers found!'
+        return Embed(title=f'Prayer Requests for {name}', description=prayer_list, color=discord.Colour.blue())
+
+    def get_recent_prayers(self, n=5):
+        print(self.prayers)
+        prayers = [prayer for prayer in self.prayers if not prayer["answered"]]
+        # Get the n most recent prayers
+        recent_prayers = prayers[:n] if len(prayers) > n else prayers
+        prayer_list = ''
+
+        for index, prayer in enumerate(recent_prayers, start=1):
+            print(prayer)
+            has_descr = '*****' if prayer["description"] != "" else ''
+            prayer_list += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
+            print('Oof')
+            
+        
+        if prayer_list == '': 'No prayers found!'
+        return Embed(title='Recent Prayer Requests', description=prayer_list, color=discord.Colour.blue())
+
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if str(member.id) not in self.prayers["users"]:
-            self.prayers["users"][str(member.id)] = []
+        if str(member.id) not in self.prayers:
+            self.prayers[str(member.id)] = []
             await self.save_prayers()
 
 
@@ -75,9 +103,10 @@ class Faith(commands.Cog):
         match cmd:
 
             case 'list':
-                await ctx.send(f'Prayer request added! `{datetime.now().strftime("%Y:%m:%d:%H:%M")}`')
-                id = message[2:-1] if message in self.prayers["users"] else ctx.author.id
-                await ctx.message.reply(embed = self.get_recent_prayers())
+                await ctx.message.reply(embed = self.get_prayer_list(ctx.author.id))
+
+            case 'recent':
+                await ctx.message.reply(embed = self.get_recent_prayers(5))
 
             case 'add':
                 if message == '':
@@ -93,7 +122,7 @@ class Faith(commands.Cog):
                 await self.add_prayer(ctx.author, prayer)
 
             case 'ans' | 'answer':
-                current_prayers = self.prayers["users"][str(ctx.author.id)]["current"]
+                current_prayers = self.prayers[str(ctx.author.id)]["current"]
 
                 if current_prayers != []:
                     if message == '' or not message.isdigit() or not (int(message)-1 <= len(current_prayers)):
