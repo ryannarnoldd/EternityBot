@@ -3,6 +3,8 @@ import discord
 import json
 import asyncio
 from discord import Embed
+# import datetime
+from datetime import datetime
 
 global PRAYERS_FILE
 PRAYERS_FILEPATH = 'data/prayers.json'
@@ -29,7 +31,15 @@ class Faith(commands.Cog):
             await asyncio.sleep(0.05)
 
     async def add_prayer(self, author, prayer):
-        self.prayers["users"][str(author.id)]["current"].insert(0, prayer)
+        self.prayers["users"][str(author.id)]["current"].insert(0, {
+            "prayer": prayer,
+            "time": datetime.now().strftime("%Y:%m:%d:%H:%M"),
+            "answered": False
+        })
+
+        # datetime.now().strftime("%Y:%m:%d:%H:%M")
+
+
         await self.save_prayers()
         return
 
