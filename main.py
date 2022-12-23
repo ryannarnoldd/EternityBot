@@ -19,12 +19,7 @@ async def on_ready():
 # On message event.
 @bot.event
 async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    # If the message contains any of the greetings, reply with a greeting!
-    if any(greet in message.content.lower().strip() for greet in greetings):
-        await message.reply('Hello!')
+    if message.author == bot.user: return
 
     # Processes commands registered with the bot.
     await bot.process_commands(message)
