@@ -28,6 +28,9 @@ class Faith(commands.Cog):
     def time_str(self, date, format='%b.%d'):
         date_object = datetime.strptime(date, DATE_FORMAT)
         return date_object.strftime(format)	
+    
+    def embed(self, title, description, color=discord.Color.blue()):
+        return Embed(title=title, description=description, color=color)
 
     async def save_prayers(self):
         await self.bot.wait_until_ready()
@@ -97,11 +100,11 @@ class Faith(commands.Cog):
         id = member.id if member else ctx.author.id
         await ctx.message.reply(embed = self.get_prayer_list(id))
 
-    @prayer.command(name='recent', brief='recent <n>', description='List the N most recent prayer requests', aliases=['r'])
+    @prayer.command(name='recent', brief='recent|r <n>', description='List the N most recent prayer requests', aliases=['r'])
     async def recent(self, ctx, n=5):
         await ctx.message.reply(embed = self.get_recent_prayers(n))
 
-    @prayer.command(name='add', brief='add <prayer>', description='Add a prayer request to your list', aliases=['a, +'])
+    @prayer.command(name='add', brief='add|a|+ <prayer>', description='Add a prayer request to your list', aliases=['a, +'])
     async def add(self, ctx, *, message=''):
         if message == '':
             await ctx.message.reply(embed = Embed(title='Prayer Request Add', description='Please type a prayer request to be added!', color=discord.Colour.blue()))
@@ -115,7 +118,7 @@ class Faith(commands.Cog):
         await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
         await self.add_prayer(ctx.author, prayer)
 
-    @prayer.command(name='answer', brief='answer <index>', description='Mark a prayer request as answered', aliases=['ans, -'])
+    @prayer.command(name='answer', brief='answer|ans|- <index>', description='Mark a prayer request as answered', aliases=['ans, -'])
     async def answer(self, ctx, *, index=''):
         current_prayers = self.prayers[str(ctx.author.id)]["current"]
 
@@ -142,11 +145,11 @@ class Faith(commands.Cog):
         else:
             await ctx.reply(embed = Embed(title='Prayer Request Answer', description='You have no prayer requests to mark as answered!', color=discord.Colour.blue()))
 
-    @prayer.command(name='help', brief='help', description='Get help with the prayer request system', aliases=['h'])
+    @prayer.command(name='help', brief='help|h|', description='Get help with the prayer request system', aliases=['h'])
     async def help(self, ctx):
-        print(help_guide)
-        help_text = '\n'.join([f'`{cmd}` - {desc}. Aliases={aliases}' for cmd, desc, aliases in enumerate(help_guide.items())])
-        await ctx.message.reply(embed=Embed(title='Prayer Request Help', description=help_text, color=discord.Color.blue()))
+        prayer_help = '\n'.join([f'`{cmd.brief}` - {cmd.description}' for cmd in self.bot.get_command('prayer').commands])
+        await ctx.message.reply(embed = self.embed(title='Prayer Request Help', description=prayer_help, color=discord.Colour.blue()))
+
 
 
 
