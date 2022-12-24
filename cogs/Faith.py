@@ -19,10 +19,6 @@ help_guide = {
     'help': 'Show this help guide'
 }
 
-def time_str(self, date, format='%b. %d'):
-    date_object = datetime.strptime(date, DATE_FORMAT)
-    return date_object.strftime(format)	
-
 class Faith(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -84,7 +80,6 @@ class Faith(commands.Cog):
         if prayer_list == '': 'No prayers found!'
         return Embed(title='Recent Prayer Requests', description=prayer_list, color=discord.Colour.blue())
 
-
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if str(member.id) not in self.prayers:
@@ -92,63 +87,68 @@ class Faith(commands.Cog):
             await self.save_prayers()
 
 
-    @commands.command(name='pray', brief="Here's your chance if you ever wanted to die!", aliases=['prayer', 'p'])
-    # Have the cmd be the command and the message be the message, or the rest of the string.
-    async def pray(self, ctx, cmd='', *, message=''):
-        
-        match cmd:
+    @commands.group(name='prayer', invoke_without_command=True, aliases=['pray', 'p', '*'])
+    async def prayer(self, ctx):
+        help_text = '\n'.join([f'`{cmd}` - {desc}' for cmd, desc in help_guide.items()])
+        await ctx.message.reply(embed=Embed(title='Prayer Request Help', description=help_text, color=discord.Color.blue()))
+    
+    @prayer.command(name='list', brief='list <mention>', description='List all prayer requests of you, or someone else!', aliases=['l'])
+    async def list(self, ctx, member: discord.Member=None):
+        id = member.id if member else ctx.author.id
+        await ctx.message.reply(embed = self.get_prayer_list(id))
 
-            case 'list':
-                await ctx.message.reply(embed = self.get_prayer_list(ctx.author.id))
+    @prayer.command(name='recent', brief='recent <n>', description='List the N most recent prayer requests', aliases=['r'])
+    async def recent(self, ctx, n=5):
+        await ctx.message.reply(embed = self.get_recent_prayers(n))
 
-            case 'recent':
-                await ctx.message.reply(embed = self.get_recent_prayers(5))
-
-            case 'add':
-                if message == '':
-                    await ctx.message.reply(embed = Embed(title='Prayer Request Add', description='Please type a prayer request to be added!', color=discord.Colour.blue()))
-                    msg = await self.bot.wait_for("message" , timeout=120, check=None)
-                    prayer = msg.content
-                else:
-                    prayer = message
-                    msg = ctx.message
-
-
-                await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
-                await self.add_prayer(ctx.author, prayer)
-
-            case 'ans' | 'answer':
-                current_prayers = self.prayers[str(ctx.author.id)]["current"]
-
-                if current_prayers != []:
-                    if message == '' or not message.isdigit() or not (int(message)-1 <= len(current_prayers)):
-                        embed = self.get_prayer_list(ctx.author.id)
-                        embed.set_footer(text='Please type the number of the prayer request you want to mark answered!')
-                        await ctx.message.reply(embed = embed)
-                        msg = await self.bot.wait_for("message", check = lambda m: m.author == ctx.author and m.channel == ctx.channel, timeout=120)
-                        print('here')
-
-                        while not msg.content.isdigit() or not (int(msg.content)-1 <= len(current_prayers)):
-                            await msg.reply(embed = Embed(description='Please type a valid number of the prayer request you want to mark answered!', color=discord.Colour.blue()))
-                            msg = await self.bot.wait_for("message", check = lambda m: m.author == ctx.author and m.channel == ctx.channel)
-
-                        message = msg.content
-
-                    else:
-                        msg = ctx.message
-                    
-                    await msg.reply(embed = Embed(title='Prayer Request Answered', description=f'*{current_prayers[int(message)-1]}* marked as answered!', color=discord.Colour.blue()))
-                    await self.answer_prayer(ctx.author, int(message))
-
-                else:
-                    await ctx.reply(embed = Embed(title='Prayer Request Answer', description='You have no prayer requests to mark as answered!', color=discord.Colour.blue()))
+    @prayer.command(name='add', brief='add <prayer>', description='Add a prayer request to your list', aliases=['a, +'])
+    async def add(self, ctx, *, message=''):
+        if message == '':
+            await ctx.message.reply(embed = Embed(title='Prayer Request Add', description='Please type a prayer request to be added!', color=discord.Colour.blue()))
+            msg = await self.bot.wait_for("message" , timeout=120, check=None)
+            prayer = msg.content
+        else:
+            prayer = message
+            msg = ctx.message
 
 
+        await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
+        await self.add_prayer(ctx.author, prayer)
+
+    @prayer.command(name='answer', brief='answer <index>', description='Mark a prayer request as answered', aliases=['ans, -'])
+    async def answer(self, ctx, *, index=''):
+        current_prayers = self.prayers[str(ctx.author.id)]["current"]
+
+        if current_prayers != []:
+            if message == '' or not message.isdigit() or not (int(message)-1 <= len(current_prayers)):
+                embed = self.get_prayer_list(ctx.author.id)
+                embed.set_footer(text='Please type the number of the prayer request you want to mark answered!')
+                await ctx.message.reply(embed = embed)
+                msg = await self.bot.wait_for("message", check = lambda m: m.author == ctx.author and m.channel == ctx.channel, timeout=120)
+                print('here')
+
+                while not msg.content.isdigit() or not (int(msg.content)-1 <= len(current_prayers)):
+                    await msg.reply(embed = Embed(description='Please type a valid number of the prayer request you want to mark answered!', color=discord.Colour.blue()))
+                    msg = await self.bot.wait_for("message", check = lambda m: m.author == ctx.author and m.channel == ctx.channel)
+
+                message = msg.content
+
+            else:
+                msg = ctx.message
+            
+            await msg.reply(embed = Embed(title='Prayer Request Answered', description=f'*{current_prayers[int(message)-1]}* marked as answered!', color=discord.Colour.blue()))
+            await self.answer_prayer(ctx.author, int(message))
+
+        else:
+            await ctx.reply(embed = Embed(title='Prayer Request Answer', description='You have no prayer requests to mark as answered!', color=discord.Colour.blue()))
+
+    @prayer.command(name='help', brief='help', description='Get help with the prayer request system', aliases=['h'])
+    async def help(self, ctx):
+        print(help_guide)
+        help_text = '\n'.join([f'`{cmd}` - {desc}. Aliases={aliases}' for cmd, desc, aliases in enumerate(help_guide.items())])
+        await ctx.message.reply(embed=Embed(title='Prayer Request Help', description=help_text, color=discord.Color.blue()))
 
 
-            case 'help' | '' | _:
-                help_text = '\n'.join([f'`{cmd}` - {desc}' for cmd, desc in help_guide.items()])
-                await ctx.message.reply(embed=Embed(title='Prayer Request Help', description=help_text, color=discord.Color.blue()))
 
 
 
