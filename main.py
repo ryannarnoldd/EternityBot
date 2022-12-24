@@ -4,7 +4,6 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 load_dotenv()
-import random
 
 greetings = ['hello', 'hi', 'hey', 'yo', 'sup', 'wassup']
 
