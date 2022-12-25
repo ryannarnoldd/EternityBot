@@ -21,7 +21,8 @@ class Bot(commands.Bot):
         await self.tree.sync(guild=GUILD)
 
 bot = Bot()
-    
+bot.remove_command('help')
+
 # On ready event.
 @bot.event
 async def on_ready():
