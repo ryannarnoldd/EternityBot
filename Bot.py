@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from typing import Literal, Optional
 from discord.ext import commands
 from discord.ext.commands import Greedy, Context # or a subclass of yours
+import utils
 load_dotenv()
 
 GUILD = discord.Object(id=1045498586105913345)
@@ -27,6 +28,7 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}!')
+
 
 # On message event.
 # Bot is not able to use commands.
