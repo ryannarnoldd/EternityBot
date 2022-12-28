@@ -6,7 +6,6 @@ from discord import Embed
 # import datetime
 from datetime import datetime
 from operator import itemgetter
-from components.ButtonMenu import ButtonMenu
 from discord import app_commands
 
 global PRAYERS_FILE
@@ -21,7 +20,7 @@ help_guide = {
     'help': 'Show this help guide'
 }
 
-class Faith(commands.GroupCog, name="pray"):
+class Faith(commands.GroupCog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
@@ -87,11 +86,11 @@ class Faith(commands.GroupCog, name="pray"):
         if prayer_list == '': 'No prayers found!'
         return Embed(title='Recent Prayer Requests', description=prayer_list, color=discord.Colour.blue())
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        if str(member.id) not in self.prayers:
-            self.prayers[str(member.id)] = []
-            await self.save_prayers()
+    # @commands.Cog.listener()
+    # async def on_member_join(self, member):
+    #     if str(member.id) not in self.prayers:
+    #         self.prayers[str(member.id)] = []
+    #         await self.save_prayers()
 
 
     # @commands.group(name='prayer', invoke_without_command=True, aliases=['pray', 'p', '*'])
@@ -126,19 +125,19 @@ class Faith(commands.GroupCog, name="pray"):
     # async def recent(self, ctx, n : int = 5):
     #     await ctx.message.reply(embed = self.get_recent_prayers(n))
 
-    # @app_commands.command(name='add',  description='Add a prayer request to your list')
-    # async def add(self, ctx, *, message : str =''):
-    #     if message == '':
-    #         await ctx.message.reply(embed = Embed(title='Prayer Request Add', description='Please type a prayer request to be added!', color=discord.Colour.blue()))
-    #         msg = await self.bot.wait_for("message" , timeout=120, check=None)
-    #         prayer = msg.content
-    #     else:
-    #         prayer = message
-    #         msg = ctx.message
+    @app_commands.command(name='add',  description='Add a prayer request to your list')
+    async def add(self, ctx, *, message : str =''):
+        if message == '':
+            await ctx.message.reply(embed = Embed(title='Prayer Request Add', description='Please type a prayer request to be added!', color=discord.Colour.blue()))
+            msg = await self.bot.wait_for("message" , timeout=120, check=None)
+            prayer = msg.content
+        else:
+            prayer = message
+            msg = ctx.message
 
 
-    #     await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
-    #     await self.add_prayer(ctx.author, prayer)
+        await msg.reply(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()))
+        await self.add_prayer(ctx.author, prayer)
 
     # @app_commands.command(name='answer',  description='Mark a prayer request as answered')
     # async def answer(self, ctx, *, index : int = ''):
