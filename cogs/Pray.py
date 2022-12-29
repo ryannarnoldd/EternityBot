@@ -5,6 +5,9 @@ import typing
 from components.PrayerList import PrayerList
 from discord import Embed
 import json
+import datetime 
+from datetime import datetime
+import asyncio
 
 global PRAYERS_FILE
 PRAYERS_FILEPATH = 'data/prayers.json'
@@ -18,8 +21,6 @@ help_guide = {
     'help': 'Show this help guide'
 }
 
-
-
 class Pray(commands.GroupCog, name="pray"):
     def __init__(self, bot):
         self.bot = bot
@@ -27,39 +28,75 @@ class Pray(commands.GroupCog, name="pray"):
         with open(PRAYERS_FILEPATH, 'r') as prayers:
             self.prayers = json.load(prayers)
 
-    def get_prayer_list(self, id):
-        name = self.bot.get_user(int(id)).name
-        user_prayers = [prayer for prayer in self.prayers if prayer["uid"] == str(id)]
-        prayer_list = ''
+    def get_current_prayers(self, id):
+        return [prayer for prayer in self.prayers if prayer["uid"] == str(id) and not prayer["answered"]]
 
-        return user_prayers
+    def get_recent_prayers(self):
+        return [prayer for prayer in self.prayers if not prayer["answered"]][:50]
 
-    @app_commands.command(name="help", description="Pray for others or yourself.")
-    async def help(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message("Hello from help", ephemeral=True)
-    
-    @app_commands.command(name="list", description="List the prayers.")
-    async def list(self, interaction: discord.Interaction) -> None:
-        theList = self.get_prayer_list(interaction.user.id)
-        view = PrayerList(theList, 'Prayer Requeests for me')
-        await view.start(interaction)
+    async def save_prayers(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            with open(PRAYERS_FILEPATH, 'w') as prayers:
+                prayers.write(json.dumps(self.prayers, indent=4))
+            await asyncio.sleep(0.05)
 
-    @app_commands.command(name="recent", description="List the recent n prayers.")
-    async def recent(self, interaction: discord.Interaction, n: int = 5) -> None:
-        view = PrayerList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 'hi')
-        await interaction.response.send_message("Hello from recent", ephemeral=True, view=view)
+    async def add_prayer(self, author, prayer, description=""):
+        self.prayers.insert(0, {
+            "uid": str(author.id),
+            "prayer": prayer,
+            "description": description,
+            "time": datetime.now().strftime(DATE_FORMAT),
+            "answered": False
+        })
+        await self.save_prayers()
+        return
+
+    async def answer_prayer(self, author, index):
+        prayers = [prayer for prayer in self.prayers if prayer["uid"] == str(author.id)]
+        if 0 < index <= len(prayers):
+            prayers[index-1]["answered"] = True
+        await self.save_prayers()
 
     @app_commands.command(name="add", description="Add a prayer.")
-    @app_commands.describe(
-        prayer="The prayer",
-        description="The description"
-    )
+    @app_commands.describe(prayer = 'The prayer.', description = 'The description.')
     async def add(self, interaction: discord.Interaction, prayer: str, description: typing.Optional[str] = '') -> None:
-        await interaction.response.send_message(f"Hello from add {prayer} {description}", ephemeral=True)
+        await interaction.response.send_message(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()), ephemeral=True)
+        await self.add_prayer(interaction.user, prayer, description)
 
-    @app_commands.command(name="answer", description="Mark a prayer as answered. (Praise God!)")
+    @app_commands.command(name= 'answer', description = 'Mark a prayer as answered. (Praise God!)')
+    @app_commands.describe(index = 'The index of the prayer to mark as answered')
     async def answer(self, interaction: discord.Interaction, index: int) -> None:
-        await interaction.response.send_message(f"Hello from answer {index}", ephemeral=True)
+        await interaction.response.send_message(embed = Embed(title='Prayer Request Answered', description=f'*{self.prayers[index-1]["prayer"]}* was marked as answered! (Praise God!)', color=discord.Colour.blue()), ephemeral=True)
+        await self.answer_prayer(interaction.user, index)
+    
+    @app_commands.command(name = 'list', description = 'List the <user>\'s prayers.')
+    async def list(self, interaction: discord.Interaction, user: discord.Member) -> None:
+        userID = user.id if user else interaction.user.id
+        prayers = self.get_current_prayers(userID)
+        view = PrayerList(prayers, f'{user.name}\'s Prayer Requests')
+        await view.start(interaction)
+
+    @app_commands.command(name = 'recent', description = 'List the recent unanswered prayers.')
+    async def recent(self, interaction: discord.Interaction) -> None:
+        view = PrayerList(self.get_recent_prayers(), f'Recent Prayer Requests')
+        await view.start(interaction)
+
+    @app_commands.command(name = 'help', description = '`help` - Show this help guide!')
+    async def help(self, interaction: discord.Interaction) -> None:
+        # Loop through extras and add them to the embed.
+        # Loop through commands and get their brief and description.
+        prayers_help = '\n'.join([f'`{cmd}` - {help_guide[cmd]}' for cmd in help_guide])
+        await interaction.response.send_message(embed = Embed(title='Prayer Request Help', description=prayers_help, color=discord.Colour.blue()), ephemeral=True)
+
+
+
+    # async def help(self, ctx):
+    #     prayer_help = '\n'.join([f'`{cmd.brief}` - {cmd.description}' for cmd in self.bot.get_command('prayer').commands])
+    #     await ctx.message.reply(embed = self.embed(title='Prayer Request Help', description=prayer_help, color=discord.Colour.blue()))
+
+
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Pray(bot))

@@ -15,7 +15,7 @@ class PrayerList(discord.ui.View):
         self.pages = int(len(self.prayers) / self.sep) + 1
         self.interaction = None
 
-    def time_str(self, date, format='%b.%d'):
+    def time_str(self, date, format='%m/%d'):
         date_object = datetime.strptime(date, DATE_FORMAT)
         return date_object.strftime(format)	
 
@@ -28,12 +28,13 @@ class PrayerList(discord.ui.View):
     async def update_page(self, page : int = 1):
         self.current_page = page
         self.update_buttons()
+        prayers = ''
         page_count = f'Page {self.current_page}/{self.pages}'
-        for index, prayer in enumerate(self.prayers, start=1):
+        for index, prayer in enumerate(self.get_prayers(), start=self.sep*(self.current_page-1)+1):
             has_descr = '*' if prayer["description"] != "" else ''
-            prayer_list += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
-        prayers = '\n'.join([f'{i}. {prayer}' for i, prayer in enumerate(self.get_prayers(), start=self.sep * (self.current_page - 1) + 1)])
-        embed = discord.Embed(title = f'{self.title} {page_count}', description = prayers)
+            prayers += f'**{index}**. {prayer["prayer"]}{has_descr} `{self.time_str(prayer["time"])}`\n'
+        embed = discord.Embed(title = f'{self.title}', description = prayers, color=discord.Color.blue())
+        embed.set_footer(text=page_count)
         await self.interaction.edit_original_response(embed=embed, view=self)
 
     @discord.ui.button(label="|<", style=discord.ButtonStyle.green)
