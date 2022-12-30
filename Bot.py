@@ -2,18 +2,10 @@ import asyncio
 import discord
 from discord.ext import commands
 import os
-from discord import app_commands
-from dotenv import load_dotenv
-from typing import Literal, Optional
-from discord.ext import commands
-from discord.ext.commands import Greedy, Context # or a subclass of yours
-import utils
-load_dotenv()
 
 GUILD = discord.Object(id=1045498586105913345)
 
 class Bot(commands.Bot):
-    GUILD = discord.Object(id=1045498586105913345)
     def __init__(self):
         super().__init__(command_prefix='!', intents=discord.Intents.all())
         
@@ -24,25 +16,21 @@ class Bot(commands.Bot):
 bot = Bot()
 bot.remove_command('help')
 
-# On ready event.
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}!')
 
-
-# On message event.
-# Bot is not able to use commands.
 @bot.event
 async def on_message(message):
     if message.author == bot.user: return
     await bot.process_commands(message) 
 
 async def load_cogs():
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            print(f'Loading {filename[:-3]}...')
-            await bot.load_extension(f'cogs.{filename[:-3]}')
-
+    for file in os.listdir('cogs'):
+            if file.endswith('.py'):
+                await bot.load_extension(f'cogs.{file[:-3]}')
+                print(f'Loaded {file[:-3]}...')
+        
 async def main():
     await load_cogs()
     await bot.start(os.getenv('TOKEN'))

@@ -15,18 +15,16 @@ global DATE_FORMAT
 DATE_FORMAT = '%Y:%m:%d:%H:%M'
 
 help_guide = {
-    'list <mention>': 'List all prayer requests of you, or someone else!',
+    'list <user>': 'List all prayer requests of you, or someone else!',
     'add <prayer>': 'Add a prayer request to your list',
-    'ans <number>': 'Mark a prayer request as answered (Praise God!)',
+    'answer <index>': 'Mark a prayer request as answered (Praise God!)',
     'help': 'Show this help guide'
 }
 
 class Pray(commands.GroupCog, name="pray"):
     def __init__(self, bot):
         self.bot = bot
-
-        with open(PRAYERS_FILEPATH, 'r') as prayers:
-            self.prayers = json.load(prayers)
+        self.prayers = json.load(open(PRAYERS_FILEPATH, 'r'))
 
     def get_current_prayers(self, id):
         return [prayer for prayer in self.prayers if prayer["uid"] == str(id) and not prayer["answered"]]
@@ -49,8 +47,7 @@ class Pray(commands.GroupCog, name="pray"):
             "time": datetime.now().strftime(DATE_FORMAT),
             "answered": False
         })
-        await self.save_prayers()
-        return
+        await self.save_prayers(); return
 
     async def answer_prayer(self, author, index):
         prayers = [prayer for prayer in self.prayers if prayer["uid"] == str(author.id)]
@@ -64,8 +61,7 @@ class Pray(commands.GroupCog, name="pray"):
         await interaction.response.send_message(embed = Embed(title='Prayer Request Added', description=f'*{prayer}* added to your prayer requests!', color=discord.Colour.blue()), ephemeral=True)
         await self.add_prayer(interaction.user, prayer, description)
 
-    @app_commands.command(name= 'answer', description = 'Mark a prayer as answered. (Praise God!)')
-    @app_commands.describe(index = 'The index of the prayer to mark as answered')
+    @commands.hybrid_command(name= 'answer', description = 'Mark a prayer as answered. (Praise God!)')
     async def answer(self, interaction: discord.Interaction, index: int) -> None:
         await interaction.response.send_message(embed = Embed(title='Prayer Request Answered', description=f'*{self.prayers[index-1]["prayer"]}* was marked as answered! (Praise God!)', color=discord.Colour.blue()), ephemeral=True)
         await self.answer_prayer(interaction.user, index)
@@ -82,20 +78,10 @@ class Pray(commands.GroupCog, name="pray"):
         view = PrayerList(self.get_recent_prayers(), f'Recent Prayer Requests')
         await view.start(interaction)
 
-    @app_commands.command(name = 'help', description = '`help` - Show this help guide!')
+    @app_commands.command(name = 'help', description = 'Show this help guide!')
     async def help(self, interaction: discord.Interaction) -> None:
-        # Loop through extras and add them to the embed.
-        # Loop through commands and get their brief and description.
         prayers_help = '\n'.join([f'`{cmd}` - {help_guide[cmd]}' for cmd in help_guide])
         await interaction.response.send_message(embed = Embed(title='Prayer Request Help', description=prayers_help, color=discord.Colour.blue()), ephemeral=True)
-
-
-
-    # async def help(self, ctx):
-    #     prayer_help = '\n'.join([f'`{cmd.brief}` - {cmd.description}' for cmd in self.bot.get_command('prayer').commands])
-    #     await ctx.message.reply(embed = self.embed(title='Prayer Request Help', description=prayer_help, color=discord.Colour.blue()))
-
-
 
 
 async def setup(bot: commands.Bot) -> None:
