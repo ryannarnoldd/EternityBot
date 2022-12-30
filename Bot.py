@@ -2,6 +2,8 @@ import asyncio
 import discord
 from discord.ext import commands
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 GUILD = discord.Object(id=1045498586105913345)
 
