@@ -22,6 +22,10 @@ bot.remove_command('help')
 async def on_ready():
     print(f'Logged in as {bot.user}!')
 
+@bot.command()
+async def hi(ctx):
+    await ctx.send('Hello!')
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user: return
