@@ -67,6 +67,7 @@ class Pray(commands.GroupCog, name="pray"):
         await self.answer_prayer(interaction.user, index)
     
     @app_commands.command(name = 'list', description = 'List the <user>\'s prayers.')
+    @app_commands.describe(user = 'The user')
     async def list(self, interaction: discord.Interaction, user: discord.Member = None) -> None:
         user = user or interaction.user
         prayers = self.get_current_prayers(user.id)
