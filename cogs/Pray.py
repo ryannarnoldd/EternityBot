@@ -14,7 +14,7 @@ PRAYERS_FILEPATH = 'data/prayers.json'
 global DATE_FORMAT
 DATE_FORMAT = '%Y:%m:%d:%H:%M'
 
-help_guide = {
+pray_help = {
     'list <user>': 'List all prayer requests of you, or someone else!',
     'add <prayer>': 'Add a prayer request to your list',
     'answer <index>': 'Mark a prayer request as answered (Praise God!)',
@@ -81,7 +81,7 @@ class Pray(commands.GroupCog, name="pray"):
 
     @app_commands.command(name = 'help', description = 'Show this help guide!')
     async def help(self, interaction: discord.Interaction) -> None:
-        prayers_help = '\n'.join([f'`{cmd}` - {help_guide[cmd]}' for cmd in help_guide])
+        prayers_help = '\n'.join([f'`{cmd}` - {pray_help[cmd]}' for cmd in pray_help])
         await interaction.response.send_message(embed = Embed(title='Prayer Request Help', description=prayers_help, color=discord.Colour.blue()), ephemeral=True)
 
 

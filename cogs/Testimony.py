@@ -11,6 +11,12 @@ global TESTIMONIES_FILE
 TESTIMONIES_FILE = 'data/testimonies.json'
 testimony = ''
 
+testimony_help = {
+    'set': 'Set your testimony.',
+    'view': 'View your testimony, or someone else\'s.',
+    'help': 'Show this help guide.'
+}
+
 class Testimony(commands.GroupCog, name="testimony"):
     global testing
     def __init__(self, bot):
@@ -40,15 +46,20 @@ class Testimony(commands.GroupCog, name="testimony"):
     @app_commands.describe(user = 'The user.')
     async def view(self, interaction: discord.Interaction, user: discord.Member = None) -> None:
         user = user or interaction.user
+        
         if str(user.id) in self.testimonies:
             testimony = self.testimonies[str(user.id)]
         else:
-            print(user)
-            print(user.id)
             testimony = f'They have not set their testimony yet!'
 
         embed = Embed(title=f'{user.name}\'s Testimony', description=testimony, color=discord.Colour.blue())
         await interaction.response.send_message(embed=embed, ephemeral=True)
-        
+
+    @app_commands.command(name="help", description="Show this help guide.")
+    async def help(self, interaction: discord.Interaction):
+        testimonies_help = '\n'.join([f'`{cmd}` - {testimony_help[cmd]}' for cmd in testimony_help])
+        await interaction.response.send_message(embed = Embed(title='Testimony Help', description=testimonies_help, color=discord.Colour.blue()), ephemeral=True)
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Testimony(bot))
