@@ -1,6 +1,5 @@
 from discord.ext import commands
 from discord import app_commands
-import asyncio
 import json
 import discord
 from discord import ChannelType

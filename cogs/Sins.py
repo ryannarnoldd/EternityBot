@@ -1,9 +1,6 @@
 from discord.ext import commands
 import discord
-import random
 from discord import app_commands
-import asyncio
-from components.PrayerList import PrayerList
 
 seven_deadly_sins = {
     'Pride': {
