@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-GUILD = discord.Object(id=1045498586105913345)
+GUILD = discord.Object(id=1055507855240855603)
 
 class Bot(commands.Bot):
     def __init__(self):

@@ -48,7 +48,7 @@ seven_deadly_sins = {
 #     'Sloth': 'Disinclination to action or labor, spiritual apathy, and inactivity'
 # }
 
-class Sins(commands.Cog):
+class Sin(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
@@ -66,4 +66,4 @@ class Sins(commands.Cog):
 
 
 async def setup(bot : commands.Bot):
-    await bot.add_cog(Sins(bot))
+    await bot.add_cog(Sin(bot))
